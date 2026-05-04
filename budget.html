@@ -8,18 +8,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Budget">
 <title>Budget Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#0d1117;--surface:#1a1f2e;--surface2:#1e2840;
-  --border:#2d3548;--accent:#4ECDC4;--red:#FF6B6B;
+  --border:#3d4f6e;--accent:#4ECDC4;--red:#FF6B6B;
   --yellow:#F7DC6F;--green:#6BCB77;--text:#e2e8f0;
   --muted:#94a3b8;--muted2:#64748b;
   --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100%;}
+html,body{background:#0d1117;color:#e2e8f0;font-family:'Syne',sans-serif;min-height:100%;}
 body{padding-bottom:90px;}
 
 /* HEADER */
@@ -453,14 +455,14 @@ function dashHtml() {
 
   <div class="card">
     <div class="card-title">7-Day Trend</div>
-    <canvas id="trendChart" height="130"></canvas>
+    <div style="position:relative;height:130px"><canvas id="trendChart"></canvas></div>
   </div>
 
   ${pieItems.length>0?`
   <div class="card">
     <div class="card-title">Spend by Category</div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <div style="flex-shrink:0;width:120px;height:120px;"><canvas id="pieChart"></canvas></div>
+      <div style="flex-shrink:0;width:120px;height:120px;position:relative"><canvas id="pieChart"></canvas></div>
       <div class="pie-legend">
         ${pieItems.map(c=>`
           <div class="pie-leg-row">
@@ -474,7 +476,7 @@ function dashHtml() {
   ${Object.keys(S.budgets).length>0?`
   <div class="card" onclick="go('Budgets')" style="cursor:pointer">
     <div class="card-title">Budget vs Spent <span style="font-size:9px;color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0">· tap to manage →</span></div>
-    <canvas id="budChart" height="150"></canvas>
+    <div style="position:relative;height:150px"><canvas id="budChart"></canvas></div>
     <div class="chart-legend">
       <div class="leg-item"><div class="leg-dot" style="background:#2d3548"></div>Budget</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Spent</div>
@@ -512,7 +514,7 @@ function afterDash() {
   });
 
   if(pieItems.length>0) {
-    charts.pie = new Chart(document.getElementById('pieChart'),{
+      charts.pie = new Chart(document.getElementById('pieChart'),{
       type:'doughnut',
       data:{labels:pieItems.map(c=>c.name),datasets:[{data:pieItems.map(c=>map[c.id]),backgroundColor:pieItems.map(c=>c.color),borderWidth:2,borderColor:'#1a1f2e'}]},
       options:{cutout:'55%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>aud(c.raw)}}},responsive:true,maintainAspectRatio:true}
@@ -871,7 +873,7 @@ function histHtml() {
   return `
   <div class="card">
     <div class="card-title">12-Month Spending Trend</div>
-    <canvas id="histChart" height="140"></canvas>
+    <div style="position:relative;height:140px"><canvas id="histChart"></canvas></div>
   </div>
   ${months.map(({year,month})=>{
     const txs=txForMonth(year,month);
@@ -883,7 +885,7 @@ function histHtml() {
     const moOver=moLimit>0&&total>moLimit;
     const topCats=S.categories.filter(c=>map[c.id]).sort((a,b)=>(map[b.id]||0)-(map[a.id]||0)).slice(0,4);
     const maxSpend=Math.max(...topCats.map(c=>map[c.id]||0),1);
-    return `<div class="hist-card" onclick="jumpToMonth(${year},${month})">
+    return `<div class="hist-card">
       <div class="hist-header">
         <div class="hist-month">${monthName(year,month)}</div>
         <div class="hist-total">${aud(total)}</div>
@@ -900,8 +902,8 @@ function histHtml() {
         ${moOver?`<span class="hist-badge" style="background:#FF6B6B18;color:var(--red)">Over budget</span>`:''}
         ${moLimit>0&&!moOver?`<span class="hist-badge" style="background:#6BCB7718;color:var(--green)">Within budget</span>`:''}
         <span class="hist-badge" style="background:var(--surface2);color:var(--muted2)">${txs.length} transactions</span>
-        <span class="hist-badge" style="background:#4ECDC411;color:var(--accent)">Tap to view →</span>
       </div>
+      <button class="btn" style="margin-top:10px;padding:8px;font-size:12px" onclick="jumpToMonth(${year},${month})">View ${monthName(year,month)} →</button>
     </div>`;
   }).join('')}`;
 }
@@ -975,7 +977,7 @@ function pickEmoji(emoji) {
 }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
-function go(v) { view=v; selectedCalDay=null; render(); window.scrollTo(0,0); }
+function go(v) { view=v; selectedCalDay=null; setTimeout(()=>{ render(); window.scrollTo(0,0); },50); }
 function prevMonth() {
   let {year,month}=viewMonth; month--; if(month<0){month=11;year--;} viewMonth={year,month}; selectedCalDay=null; render();
 }
@@ -983,7 +985,7 @@ function nextMonth() {
   const now=new Date(); if(viewMonth.year===now.getFullYear()&&viewMonth.month===now.getMonth()) return;
   let {year,month}=viewMonth; month++; if(month>11){month=0;year++;} viewMonth={year,month}; selectedCalDay=null; render();
 }
-function jumpToMonth(y,m) { viewMonth={year:y,month:m}; view='Dashboard'; render(); window.scrollTo(0,0); }
+function jumpToMonth(y,m) { viewMonth={year:parseInt(y),month:parseInt(m)}; view='Dashboard'; setTimeout(()=>{ render(); window.scrollTo(0,0); },50); }
 function selectCalDay(d) { selectedCalDay = selectedCalDay===d ? null : d; render(); }
 
 function addTx() {
