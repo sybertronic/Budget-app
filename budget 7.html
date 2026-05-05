@@ -25,7 +25,7 @@ body.light{
   color:#1a1a2e !important;
 }
 body.light .header{background:linear-gradient(160deg,#f8f8ff,#f4f4f8) !important;}
-body.light .bottom-nav{background:#ffffff !important;border-top:1px solid #e0e0ec !important;}
+body.light .bottom-nav{background:#ffffff !important;border-top:1px solid #e0e0ec !important;} body.light .bottom-nav-inner{background:#ffffff;} body.light .bottom-nav-fill{background:#ffffff !important;}
 body.light .more-menu,body.light .currency-sheet{background:#ffffff !important;}
 body.light .inp,body.light .sel{background:#f4f4f8 !important;color:#1a1a2e !important;border-color:#d0d0e0 !important;}
 body.light .card,body.light .stat-card,body.light .hist-card,body.light .overall-bar-wrap{background:#ffffff !important;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
@@ -36,7 +36,7 @@ body.light .empty{background:#f8f8ff !important;border-color:#e0e0ec !important;
 body.light .bud-limit-item{background:#f4f4f8 !important;border-color:#e0e0ec !important;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;min-height:100%;}
-body{padding-bottom:calc(80px + env(safe-area-inset-bottom));}
+body{padding-bottom:calc(100px + env(safe-area-inset-bottom));}
 
 /* HEADER */
 .header{background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px 0;position:sticky;top:0;z-index:200;}
@@ -46,7 +46,7 @@ body{padding-bottom:calc(80px + env(safe-area-inset-bottom));}
 .badge{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:5px 10px;font-size:11px;color:var(--muted);font-family:var(--mono);}
 .nav{display:none;}
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:300;padding-bottom:max(env(safe-area-inset-bottom), 8px);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;z-index:300;}.bottom-nav-inner{display:flex;width:100%;}.bottom-nav-fill{background:var(--surface);height:env(safe-area-inset-bottom,16px);min-height:16px;}
 .bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 6px;cursor:pointer;background:none;border:none;color:var(--muted);font-family:var(--font);transition:all .15s;gap:3px;-webkit-tap-highlight-color:transparent;}
 .bn-btn.active{color:var(--accent);}
 .bn-btn:active{opacity:.7;}
@@ -455,6 +455,7 @@ let viewMonth = {year: new Date().getFullYear(), month: new Date().getMonth()};
 let txForm = {date:td(),description:'',catId: S.categories[0]?.id || 'c1',amount:''};
 let subForm = {name:'',catId:'c8',amount:'',frequency:'Monthly',nextDate:td()};
 let editSubId = null;
+let incomePeriod = 'monthly';
 let budChartPeriod = 'monthly';
 let subTab = 'subscriptions';
 let showMoreMenu = false;
@@ -517,7 +518,11 @@ function applyTheme() {
     : 'linear-gradient(160deg,'+t.headerGrad+' 0%,'+t.bg+' 100%)';
 
   const bn = document.getElementById('bottom-nav');
-  if(bn) bn.style.background = isLight ? '#ffffff' : t.surface;
+  if(bn) {
+    bn.style.background = isLight ? '#ffffff' : t.surface;
+    const fill = bn.querySelector('.bottom-nav-fill');
+    if(fill) fill.style.background = isLight ? '#ffffff' : t.surface;
+  }
 
   // Update border colours
   if(document.body) document.querySelectorAll('.card,.stat-card,.hist-card,.overall-bar-wrap,.month-nav,.day-panel,.tx-row,.sub-row,.bud-row,.cat-row').forEach(el=>{
@@ -545,10 +550,10 @@ function aud(n) {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function getCat(id) { return S.categories.find(c=>c.id===id) || {id:'?',name:'Unknown',icon:'📦',color:'#888'}; }
 function subMo(s) {
-  if(s.frequency==='Weekly') return s.amount*52/12;
-  if(s.frequency==='Fortnightly') return s.amount*26/12;
-  if(s.frequency==='Monthly') return s.amount;
-  if(s.frequency==='Yearly') return s.amount/12;
+  if(s.frequency==='Weekly')      return s.amount*4;
+  if(s.frequency==='Fortnightly') return s.amount*2;
+  if(s.frequency==='Monthly')     return s.amount;
+  if(s.frequency==='Yearly')      return s.amount/12;
   return 0;
 }
 function totalSubsMo() { return S.subscriptions.filter(s=>s.active).reduce((a,s)=>a+subMo(s),0); }
@@ -636,13 +641,13 @@ function render() {
   const bn = document.getElementById('bottom-nav');
   if(bn) {
     const inMore = MORE_TABS.some(t=>t.id===view);
-    bn.innerHTML = MAIN_TABS.map(t => {
+    bn.innerHTML = '<div class="bottom-nav-inner">' + MAIN_TABS.map(t => {
       const isActive = t.id==='__more__' ? inMore : t.id===view;
       return `<button class="bn-btn${isActive?' active':''}" onclick="${t.id==='__more__'?'toggleMoreMenu()':"go('"+t.id+"')"}">
         <div class="bn-icon">${t.icon}</div>
         <div class="bn-label">${t.label}</div>
       </button>`;
-    }).join('');
+    }).join('') + '</div><div class="bottom-nav-fill"></div>';
   }
 
   const m = document.getElementById('main');
@@ -1552,8 +1557,8 @@ function clearAllData() {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function incomeToMonthly(inc) {
-  if(inc.frequency==='Weekly')      return inc.amount*52/12;
-  if(inc.frequency==='Fortnightly') return inc.amount*26/12;
+  if(inc.frequency==='Weekly')      return inc.amount*4;
+  if(inc.frequency==='Fortnightly') return inc.amount*2;
   if(inc.frequency==='Monthly')     return inc.amount;
   if(inc.frequency==='Yearly')      return inc.amount/12;
   return 0;
@@ -1562,18 +1567,67 @@ function totalMonthlyIncome() { return (S.income||[]).reduce((a,i)=>a+incomeToMo
 function totalMonthlyGoalSavings() { return (S.goals||[]).reduce((a,g)=>a+(g.monthlySaving||0),0); }
 
 // ─── INCOME & GOALS ───────────────────────────────────────────────────────────
+// ─── INCOME PERIOD HELPERS ────────────────────────────────────────────────────
+function periodLabel() {
+  if(incomePeriod==='weekly')      return 'Weekly';
+  if(incomePeriod==='fortnightly') return 'Fortnightly';
+  return 'Monthly';
+}
+function periodDivisor() {
+  if(incomePeriod==='weekly')      return 4;
+  if(incomePeriod==='fortnightly') return 2;
+  return 1;
+}
+function moToP(monthlyAmt) { return (monthlyAmt||0) / periodDivisor(); }
+function totalPeriodIncome()       { return moToP(totalMonthlyIncome()); }
+function totalPeriodGoalSavings()  { return moToP(totalMonthlyGoalSavings()); }
+function setIncomePeriod(p)        { incomePeriod=p; if(view==='Income') setTimeout(()=>render(),50); }
+
+
 function incomeHtml() {
-  const totalIncome = totalMonthlyIncome();
-  const ob = S.overallBudget||{};
-  const monthlyBudget = ob.monthly||0;
-  const monthlySavings = totalMonthlyGoalSavings();
+  const pdiv   = periodDivisor();
+  const pLabel = periodLabel();
+  const totalIncome   = totalPeriodIncome();
+  const ob            = S.overallBudget||{};
+  const periodBudget  = moToP(ob.monthly||0);
+  const periodSavings = totalPeriodGoalSavings();
+  const leftover      = totalIncome - periodBudget - periodSavings;
 
-  var html = '<div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:18px">Income & Goals</div>';
+  var html = '<div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px">Income & Goals</div>';
 
-  // Flow summary
-  html += incomeFlowHtml(totalIncome, monthlyBudget, monthlySavings);
+  // Period toggle
+  html += '<div class="pills" style="margin-bottom:16px">';
+  html += '<button class="pill'+(incomePeriod==='weekly'?' active':'')+'" onclick="setIncomePeriod(&quot;weekly&quot;)">Weekly</button>';
+  html += '<button class="pill'+(incomePeriod==='fortnightly'?' active':'')+'" onclick="setIncomePeriod(&quot;fortnightly&quot;)">Fortnightly</button>';
+  html += '<button class="pill'+(incomePeriod==='monthly'?' active':'')+'" onclick="setIncomePeriod(&quot;monthly&quot;)">Monthly</button>';
+  html += '</div>';
 
-  // Income form
+  // Flow summary card
+  if(totalIncome > 0) {
+    html += '<div class="card" style="margin-bottom:14px">';
+    html += '<div class="card-title">'+pLabel+' Flow</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:12px">';
+    html += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">💰</span><span style="font-size:13px;font-weight:600">Income</span></div>';
+    html += '<span style="font-size:15px;font-weight:800;color:var(--green);font-family:var(--mono)">'+aud(totalIncome)+'</span></div>';
+    if(periodBudget>0) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:12px">';
+      html += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🎯</span><span style="font-size:13px;font-weight:600">Budget</span></div>';
+      html += '<span style="font-size:15px;font-weight:800;color:var(--red);font-family:var(--mono)">−'+aud(periodBudget)+'</span></div>';
+    }
+    if(periodSavings>0) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:12px">';
+      html += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🏦</span><span style="font-size:13px;font-weight:600">Saving to goals</span></div>';
+      html += '<span style="font-size:15px;font-weight:800;color:var(--yellow);font-family:var(--mono)">−'+aud(periodSavings)+'</span></div>';
+    }
+    html += '<div style="height:1px;background:var(--border);margin:2px 0"></div>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:'+(leftover>=0?'#4ade8018':'#F06B6B18')+';border:1px solid '+(leftover>=0?'var(--green)':'var(--red)')+';border-radius:12px">';
+    html += '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+(leftover>=0?'✅':'⚠️')+'</span><span style="font-size:13px;font-weight:700">Free to spend</span></div>';
+    html += '<span style="font-size:15px;font-weight:800;color:'+(leftover>=0?'var(--green)':'var(--red)')+';font-family:var(--mono)">'+aud(leftover)+'</span></div>';
+    html += '</div></div>';
+  }
+
+  // Add income source form
   html += '<div class="card"><div class="card-title g">+ Add Income Source</div>';
   html += '<div class="fg">';
   html += '<input class="inp" type="text" id="inc-name" placeholder="e.g. Salary, Freelance">';
@@ -1581,22 +1635,26 @@ function incomeHtml() {
   html += '<input class="inp span2" type="number" id="inc-amt" placeholder="Amount ($)" min="0" step="0.01" inputmode="decimal">';
   html += '</div><button class="btn" onclick="addIncome()">Add Income</button></div>';
 
-  // Income list
+  // Income list - show period equivalent
   if(!S.income||S.income.length===0) {
     html += '<div class="empty">No income sources added yet.</div>';
   } else {
-    html += incomeSourcesHtml();
+    html += (S.income||[]).map(function(inc) {
+      var monthlyAmt = incomeToMonthly(inc);
+      var periodAmt  = moToP(monthlyAmt);
+      return '<div class="sub-row"><div style="font-size:22px">💵</div><div class="sub-info"><div class="sub-name">'+esc(inc.name)+'</div><div class="sub-meta">'+inc.frequency+' · ≈ '+aud(periodAmt)+'/'+pLabel.toLowerCase()+'</div></div><div class="sub-right"><div class="sub-amt">'+aud(inc.amount)+'<span style="font-size:10px;color:var(--muted2);font-weight:400">/'+inc.frequency.toLowerCase().replace('ly','')+'</span></div></div><button class="ico-btn del" onclick="delIncome('+inc.id+')">🗑</button></div>';
+    }).join('');
   }
 
-  // Budget link
+  // Budget link card
   html += '<div class="card" style="margin-top:4px"><div class="card-title">Budget</div>';
   html += '<div style="display:flex;justify-content:space-between;align-items:center">';
-  html += '<div><div style="font-size:14px;font-weight:600">Monthly spending limit</div>';
-  html += '<div style="font-size:12px;color:var(--muted2);margin-top:2px">'+(monthlyBudget>0?aud(monthlyBudget)+'/mo':'Not set yet')+'</div></div>';
-  html += '<button class="btn" style="width:auto;padding:8px 16px;font-size:12px" onclick="go(\'Budgets\')">Manage →</button>';
+  html += '<div><div style="font-size:14px;font-weight:600">'+pLabel+' spending limit</div>';
+  html += '<div style="font-size:12px;color:var(--muted2);margin-top:2px">'+(periodBudget>0?aud(periodBudget)+'/'+pLabel.toLowerCase():'Not set yet')+'</div></div>';
+  html += '<button class="btn" style="width:auto;padding:8px 16px;font-size:12px" onclick="go(&quot;Budgets&quot;)">Manage →</button>';
   html += '</div></div>';
 
-  // Goals form
+  // Add goal form
   html += '<div class="card" style="margin-top:4px"><div class="card-title y">+ Add Savings Goal</div>';
   html += '<div class="fg">';
   html += '<input class="inp" type="text" id="goal-name" placeholder="e.g. Holiday, Car, House">';
