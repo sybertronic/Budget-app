@@ -639,8 +639,8 @@ function aud(n) {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function getCat(id) { return S.categories.find(c=>c.id===id) || {id:'?',name:'Unknown',icon:'📦',color:'#888'}; }
 function subMo(s) {
-  if(s.frequency==='Weekly') return s.amount*52/12;
-  if(s.frequency==='Fortnightly') return s.amount*26/12;
+  if(s.frequency==='Weekly') return s.amount*4;
+  if(s.frequency==='Fortnightly') return s.amount*2;
   if(s.frequency==='Monthly') return s.amount;
   if(s.frequency==='Yearly') return s.amount/12;
   return 0;
@@ -1788,8 +1788,8 @@ function clearAllData() {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function incomeToMonthly(inc) {
-  if(inc.frequency==='Weekly')      return inc.amount*52/12;
-  if(inc.frequency==='Fortnightly') return inc.amount*26/12;
+  if(inc.frequency==='Weekly')      return inc.amount*4
+  if(inc.frequency==='Fortnightly') return inc.amount*2;
   if(inc.frequency==='Monthly')     return inc.amount;
   if(inc.frequency==='Yearly')      return inc.amount/12;
   return 0;
